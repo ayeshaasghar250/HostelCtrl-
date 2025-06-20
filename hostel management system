@@ -1,0 +1,233 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Student structure
+struct Student {
+    string name;
+    int rollNo;
+    string department;
+    float cgpa;
+    bool isScholarship;
+};
+
+// 3D pointer array for hostel
+Student* hostel[3][5][2];
+
+// Initialize hostel beds
+void initializeHostel() {
+    for (int h = 0; h < 3; h++)
+        for (int r = 0; r < 5; r++)
+            for (int b = 0; b < 2; b++)
+                hostel[h][r][b] = nullptr;
+}
+
+// Check for duplicate roll number
+bool isDuplicateRoll(int rollNo) {
+    for (int h = 0; h < 3; h++)
+        for (int r = 0; r < 5; r++)
+            for (int b = 0; b < 2; b++)
+                if (hostel[h][r][b] != nullptr && (*hostel[h][r][b]).rollNo == rollNo)
+                    return true;
+    return false;
+}
+
+// Allocate student
+void allocateStudent() {
+    cout << "\nAllocate Student:\n";
+
+    Student* s = new Student;
+
+    cout << "Enter Name: ";
+    cin >> (*s).name;
+    cout << "Enter Roll Number: ";
+    cin >> (*s).rollNo;
+
+    if (isDuplicateRoll((*s).rollNo)) {
+        cout << "Duplicate roll number. Allocation failed.\n";
+        delete s;
+        return;
+    }
+
+    cout << "Enter Department: ";
+    cin >> (*s).department;
+    cout << "Enter CGPA: ";
+    cin >> (*s).cgpa;
+
+    if ((*s).cgpa < 2.0) {
+        cout << "CGPA below 2.0. Cannot allocate.\n";
+        delete s;
+        return;
+    }
+
+    cout << "Is Scholarship Holder? (1 = Yes, 0 = No): ";
+    cin >> (*s).isScholarship;
+
+    for (int h = 0; h < 3; h++) {
+        for (int r = 0; r < 5; r++) {
+            if ((*s).isScholarship && r >= 3) continue;
+
+            for (int b = 0; b < 2; b++) {
+                if (hostel[h][r][b] == nullptr) {
+                    hostel[h][r][b] = s;
+                    cout << "Student allocated to Hostel " << h+1 << ", Room " << r+1 << ", Bed " << b+1 << "\n";
+                    return;
+                }
+            }
+        }
+    }
+
+    cout << "No space available.\n";
+    delete s;
+}
+
+// Display all rooms
+void displayAllRooms() {
+    cout << "\nDisplay All Rooms:\n";
+
+    for (int h = 0; h < 3; h++) {
+        cout << "\nHostel " << h+1 << ":\n";
+        for (int r = 0; r < 5; r++) {
+            int count = 0;
+
+            for (int b = 0; b < 2; b++)
+                if (hostel[h][r][b] != nullptr)
+                    count++;
+
+            if (count == 0) cout << "  Room " << r+1 << " is Empty\n";
+            else if (count == 1) cout << "  Room " << r+1 << " is Partially Filled\n";
+            else cout << "  Room " << r+1 << " is Full\n";
+
+            for (int b = 0; b < 2; b++) {
+                if (hostel[h][r][b] != nullptr) {
+                    Student* s = hostel[h][r][b];
+                    cout << "    Name: " << (*s).name
+                         << ", Roll: " << (*s).rollNo
+                         << ", Department: " << (*s).department
+                         << ", CGPA: " << (*s).cgpa
+                         << ", Scholarship: " << ((*s).isScholarship ? "Yes" : "No") << "\n";
+                }
+            }
+        }
+    }
+}
+
+// Search student by roll number
+void searchStudent() {
+    cout << "\nSearch Student:\n";
+
+    int roll;
+    cout << "Enter Roll Number to Search: ";
+    cin >> roll;
+
+    for (int h = 0; h < 3; h++)
+        for (int r = 0; r < 5; r++)
+            for (int b = 0; b < 2; b++)
+                if (hostel[h][r][b] != nullptr && (*hostel[h][r][b]).rollNo == roll) {
+                    Student* s = hostel[h][r][b];
+                    cout << "Name: " << (*s).name << "\n"
+                         << "Department: " << (*s).department << "\n"
+                         << "CGPA: " << (*s).cgpa << "\n"
+                         << "Scholarship: " << ((*s).isScholarship ? "Yes" : "No") << "\n"
+                         << "Location: Hostel " << h+1 << ", Room " << r+1 << ", Bed " << b+1 << "\n";
+                    return;
+                }
+
+    cout << "Student not found.\n";
+}
+
+// Transfer student
+void transferStudent() {
+    cout << "\nTransfer Student:\n";
+
+    int roll;
+    cout << "Enter Roll Number to Transfer: ";
+    cin >> roll;
+
+    for (int h = 0; h < 3; h++)
+        for (int r = 0; r < 5; r++)
+            for (int b = 0; b < 2; b++)
+                if (hostel[h][r][b] != nullptr && (*hostel[h][r][b]).rollNo == roll) {
+                    Student* s = hostel[h][r][b];
+                    hostel[h][r][b] = nullptr;
+
+                    for (int nh = 0; nh < 3; nh++)
+                        for (int nr = 0; nr < 5; nr++) {
+                            if ((*s).isScholarship && nr >= 3) continue;
+                            for (int nb = 0; nb < 2; nb++) {
+                                if (hostel[nh][nr][nb] == nullptr) {
+                                    hostel[nh][nr][nb] = s;
+                                    cout << "Transferred to Hostel " << nh+1 << ", Room " << nr+1 << ", Bed " << nb+1 << "\n";
+                                    return;
+                                }
+                            }
+                        }
+
+                    hostel[h][r][b] = s;
+                    cout << "No space found. Student remains in original room.\n";
+                    return;
+                }
+
+    cout << "Student not found for transfer.\n";
+}
+
+// Academic summary
+void academicSummary() {
+    cout << "\nAcademic Summary:\n";
+
+    int total = 0, scholarships = 0, sum = 0;
+    int above3[3] = {0};
+
+    for (int h = 0; h < 3; h++)
+        for (int r = 0; r < 5; r++)
+            for (int b = 0; b < 2; b++)
+                if (hostel[h][r][b] != nullptr) {
+                    Student* s = hostel[h][r][b];
+                    total++;
+                    sum += (*s).cgpa;
+                    if ((*s).isScholarship) scholarships++;
+                    if ((*s).cgpa > 3.0) above3[h]++;
+                }
+
+    cout << "Total Students: " << total << "\n";
+    cout << "Average CGPA: " << (total > 0 ? (float)sum / total : 0) << "\n";
+    cout << "Scholarship Holders: " << scholarships << "\n";
+    for (int i = 0; i < 3; i++)
+        cout << "Students > 3.0 CGPA in Hostel " << i+1 << ": " << above3[i] << "\n";
+}
+
+// Show menu
+void showMenu() {
+    int choice;
+    do {
+        cout << "\nMain Menu:\n";
+        cout << "1. Allocate Student\n";
+        cout << "2. Display All Rooms\n";
+        cout << "3. Search Student\n";
+        cout << "4. Transfer Student\n";
+        cout << "5. Academic Summary\n";
+        cout << "0. Exit\n";
+        cout << "Enter choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1: allocateStudent(); break;
+            case 2: displayAllRooms(); break;
+            case 3: searchStudent(); break;
+            case 4: transferStudent(); break;
+            case 5: academicSummary(); break;
+            case 0: cout << "Thanks for using this system.\n"; break;
+            default: cout << "Invalid option. Try again.\n";
+        }
+    } while (choice != 0);
+}
+
+// Main function
+int main() {
+    cout << "================================\n"
+    cout << "\nSmart Hostel Management System\n";
+    cout << "================================\n";
+    initializeHostel();
+    showMenu();
+    return 0;
+}
